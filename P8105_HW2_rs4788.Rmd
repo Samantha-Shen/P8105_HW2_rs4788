@@ -6,9 +6,72 @@ date: "2025-09-30"
 
 ```{r setup}
 library(tidyverse)
+library(janitor)
 ```
 
+# Problem 1
 
+### First, deal with pols_month data:
+```{r}
+polse_month = 
+  read.csv("./fivethirtyeight_datasets/pols-month.csv") %>%
+  janitor::clean_names() %>%
+  separate(mon, into = c("year", "month", "day")) %>%
+  mutate(month = month.name[as.integer(month)],
+         year = as.numeric(year)) %>%
+  pivot_longer(
+    cols = c(prez_gop, prez_dem),
+    names_to = "president",
+    names_prefix = "prez_", 
+    values_to = "in_office") %>%
+  filter(in_office == 1) %>%
+  select(-day, -in_office)
+print(polse_month)
+```
 
+### Second, deal with snp data:
+```{r}
+snp = 
+  read.csv("./fivethirtyeight_datasets/snp.csv") %>%
+  janitor::clean_names() %>%
+  separate(date, into = c("month", "day", "year"),sep = "/") %>%
+  mutate(
+    year = as.integer(year),
+    year = ifelse(year <= 25, 2000 + year, 1900 + year),
+    month_num = as.integer(month),  
+    month = month.name[month_num]
+    ) %>%
+  select(year, month, close,month_num) %>%
+  arrange(year, month_num,close) %>%
+  select(-month_num)
+print(as_tibble(snp))
+```
 
+### Third, tidy the unemployment data:
+```{r}
+unemploy= 
+  read.csv("./fivethirtyeight_datasets/unemployment.csv") %>%
+  pivot_longer(
+    Jan:Dec,
+    names_to = "month_abb" ,
+    values_to = "unemployment_rate") %>% 
+  mutate(
+    month = month.name[match(month_abb, month.abb)] ,
+    year=Year,
+    year = as.numeric(year)
+  ) %>%
+  select(year, month, unemployment_rate) %>%
+  arrange(year, month)   
+print(unemploy)
+```
 
+### Join the datasets:
+```{r}
+final_dataset =
+  left_join(polse_month, snp, by =c("year","month")) %>%
+  left_join(unemploy, by =c("year","month"))
+print(final_dataset)
+```
+
+### Describe the datasets:
+Based on the analysis of three datasets, we merged political, financial, and employment indicators into a comprehensive dataset spanning 1947 to 2015. The final merged dataset comprises 817 observations and 11 variables, including key variables such as the president's party affiliation, S&P stock market closing prices, and unemployment rates. This enables a cross-domain analysis of U.S. political and economic trends over nearly seven decades.
