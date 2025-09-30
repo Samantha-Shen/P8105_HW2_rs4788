@@ -388,10 +388,10 @@ display: none;
     names_to = &quot;president&quot;,
     names_prefix = &quot;prez_&quot;, 
     values_to = &quot;in_office&quot;) %&gt;%
-  filter(in_office == 1) %&gt;%
+  filter(in_office &gt;= 1) %&gt;%
   select(-day, -in_office)
 print(polse_month)</code></pre>
-<pre><code>## # A tibble: 817 × 9
+<pre><code>## # A tibble: 822 × 9
 ##     year month     gov_gop sen_gop rep_gop gov_dem sen_dem rep_dem president
 ##    &lt;dbl&gt; &lt;chr&gt;       &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt; &lt;chr&gt;    
 ##  1  1947 January        23      51     253      23      45     198 dem      
@@ -404,7 +404,7 @@ print(polse_month)</code></pre>
 ##  8  1947 August         23      51     253      23      45     198 dem      
 ##  9  1947 September      23      51     253      23      45     198 dem      
 ## 10  1947 October        23      51     253      23      45     198 dem      
-## # ℹ 807 more rows</code></pre>
+## # ℹ 812 more rows</code></pre>
 </div>
 <div id="second-deal-with-snp-data" class="section level3">
 <h3>Second, deal with snp data:</h3>
@@ -474,7 +474,7 @@ print(unemploy)</code></pre>
   left_join(polse_month, snp, by =c(&quot;year&quot;,&quot;month&quot;)) %&gt;%
   left_join(unemploy, by =c(&quot;year&quot;,&quot;month&quot;))
 print(final_dataset)</code></pre>
-<pre><code>## # A tibble: 817 × 11
+<pre><code>## # A tibble: 822 × 11
 ##     year month   gov_gop sen_gop rep_gop gov_dem sen_dem rep_dem president close
 ##    &lt;dbl&gt; &lt;chr&gt;     &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt;   &lt;int&gt; &lt;chr&gt;     &lt;dbl&gt;
 ##  1  1947 January      23      51     253      23      45     198 dem          NA
@@ -487,14 +487,14 @@ print(final_dataset)</code></pre>
 ##  8  1947 August       23      51     253      23      45     198 dem          NA
 ##  9  1947 Septem…      23      51     253      23      45     198 dem          NA
 ## 10  1947 October      23      51     253      23      45     198 dem          NA
-## # ℹ 807 more rows
+## # ℹ 812 more rows
 ## # ℹ 1 more variable: unemployment_rate &lt;dbl&gt;</code></pre>
 </div>
 <div id="describe-the-datasets" class="section level3">
 <h3>Describe the datasets:</h3>
 <p>Based on the analysis of three datasets, we merged political,
 financial, and employment indicators into a comprehensive dataset
-spanning 1947 to 2015. The final merged dataset comprises 817
+spanning 1947 to 2015. The final merged dataset comprises 822
 observations and 11 variables, including key variables such as the
 president’s party affiliation, S&amp;P stock market closing prices, and
 unemployment rates. This enables a cross-domain analysis of U.S.

@@ -24,7 +24,7 @@ polse_month =
     names_to = "president",
     names_prefix = "prez_", 
     values_to = "in_office") %>%
-  filter(in_office == 1) %>%
+  filter(in_office >= 1) %>%
   select(-day, -in_office)
 print(polse_month)
 ```
@@ -74,4 +74,4 @@ print(final_dataset)
 ```
 
 ### Describe the datasets:
-Based on the analysis of three datasets, we merged political, financial, and employment indicators into a comprehensive dataset spanning 1947 to 2015. The final merged dataset comprises 817 observations and 11 variables, including key variables such as the president's party affiliation, S&P stock market closing prices, and unemployment rates. This enables a cross-domain analysis of U.S. political and economic trends over nearly seven decades.
+Based on the analysis of three datasets, we merged political, financial, and employment indicators into a comprehensive dataset spanning 1947 to 2015. The final merged dataset comprises 822 observations and 11 variables, including key variables such as the president's party affiliation, S&P stock market closing prices, and unemployment rates. This enables a cross-domain analysis of U.S. political and economic trends over nearly seven decades.
