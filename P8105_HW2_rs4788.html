@@ -9,8 +9,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
+<meta name="author" content="Ruhui Shen rs4788" />
 
-<meta name="date" content="2025-09-30" />
 
 <title>P8105_HW2_rs4788</title>
 
@@ -350,7 +350,7 @@ display: none;
 
 
 <h1 class="title toc-ignore">P8105_HW2_rs4788</h1>
-<h4 class="date">2025-09-30</h4>
+<h4 class="author">Ruhui Shen rs4788</h4>
 
 </div>
 
@@ -373,7 +373,8 @@ display: none;
 ## The following objects are masked from &#39;package:stats&#39;:
 ## 
 ##     chisq.test, fisher.test</code></pre>
-<pre class="r"><code>library(readxl)</code></pre>
+<pre class="r"><code>library(readxl)
+library(dplyr)</code></pre>
 <div id="problem-1" class="section level1">
 <h1>Problem 1</h1>
 <div id="first-deal-with-pols_month-data" class="section level3">
@@ -629,6 +630,104 @@ bottles, cigarette butts, and sports balls. Professor Trash Wheel
 collected 282.26 tons of trash total, while Gwynnda collected 1.812^{4}
 cigarette butts in June 2022. These data demonstrate the substantial
 environmental impact of these innovative trash collection systems.</p>
+</div>
+</div>
+<div id="problem-3" class="section level1">
+<h1>Problem 3</h1>
+<div id="creat-a-single-well-organized-dataset" class="section level3">
+<h3>Creat a single, well-organized dataset:</h3>
+<pre class="r"><code>zip_df =
+  read.csv(&quot;./zillow_data/Zip Codes.csv&quot;) %&gt;%
+  janitor::clean_names()</code></pre>
+<pre class="r"><code>zori_df =
+  read_csv(&quot;./zillow_data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv&quot;) %&gt;%
+  janitor::clean_names() </code></pre>
+<pre><code>## Rows: 149 Columns: 125
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr   (6): RegionType, StateName, State, City, Metro, CountyName
+## dbl (119): RegionID, SizeRank, RegionName, 2015-01-31, 2015-02-28, 2015-03-3...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>date_cols = names(zori_df)[10:ncol(zori_df)]
+zori_long = zori_df %&gt;%
+  pivot_longer(
+    cols = all_of(date_cols),
+    names_to = &quot;date&quot;,
+    values_to = &quot;zori&quot;
+  )</code></pre>
+<pre class="r"><code>final_df = 
+  zori_long %&gt;%
+  left_join(zip_df, by = c(&quot;region_name&quot; = &quot;zip_code&quot;),relationship = &quot;many-to-many&quot;)
+print(final_df)</code></pre>
+<pre><code>## # A tibble: 17,516 × 17
+##    region_id size_rank region_name region_type state_name state city     metro  
+##        &lt;dbl&gt;     &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt; &lt;chr&gt;    &lt;chr&gt;  
+##  1     62080         4       11368 zip         NY         NY    New York New Yo…
+##  2     62080         4       11368 zip         NY         NY    New York New Yo…
+##  3     62080         4       11368 zip         NY         NY    New York New Yo…
+##  4     62080         4       11368 zip         NY         NY    New York New Yo…
+##  5     62080         4       11368 zip         NY         NY    New York New Yo…
+##  6     62080         4       11368 zip         NY         NY    New York New Yo…
+##  7     62080         4       11368 zip         NY         NY    New York New Yo…
+##  8     62080         4       11368 zip         NY         NY    New York New Yo…
+##  9     62080         4       11368 zip         NY         NY    New York New Yo…
+## 10     62080         4       11368 zip         NY         NY    New York New Yo…
+## # ℹ 17,506 more rows
+## # ℹ 9 more variables: county_name &lt;chr&gt;, date &lt;chr&gt;, zori &lt;dbl&gt;, county &lt;chr&gt;,
+## #   state_fips &lt;int&gt;, county_code &lt;int&gt;, county_fips &lt;int&gt;, file_date &lt;chr&gt;,
+## #   neighborhood &lt;chr&gt;</code></pre>
+</div>
+<div id="describe-dataset" class="section level3">
+<h3>Describe dataset:</h3>
+<p>The resulting tidy dataset contains 17516 total observations.<br />
+There are 149 unique ZIP codes represented, and 43 unique
+neighborhoods.</p>
+<p>What about zipcode?</p>
+<pre class="r"><code>missing_zips &lt;- anti_join(
+  zip_df, 
+  zori_long, 
+  by = c(&quot;zip_code&quot; = &quot;region_name&quot;)
+)</code></pre>
+<p>In total, there are 171 ZIP codes present in the ZIP code dataset but
+absent from the Zillow rental price dataset. For example, ZIP codes such
+as 10464, 10474, 10475 are not included in the Zillow dataset.</p>
+<p>Rental price?</p>
+<pre class="r"><code>covid_wide =
+  final_df %&gt;%
+  filter(date %in% c(&quot;x2020_01_31&quot;, &quot;x2021_01_31&quot;)) %&gt;%
+  select(zip_code = region_name, neighborhood, county, date, zori) %&gt;%
+  pivot_wider(
+    id_cols = c(zip_code, county, neighborhood),
+    names_from = date,
+    values_from = zori) %&gt;%
+  mutate(price_diff = x2021_01_31 - x2020_01_31) %&gt;%
+  arrange(price_diff)
+
+largest_drop =
+  covid_wide[order(covid_wide$price_diff), c(&quot;zip_code&quot;,&quot;county&quot;, &quot;neighborhood&quot;, &quot;price_diff&quot;)][1:10, ] %&gt;%
+  mutate(borough = &quot;Manhattan&quot;)
+print(largest_drop)</code></pre>
+<pre><code>## # A tibble: 10 × 5
+##    zip_code county   neighborhood                  price_diff borough  
+##       &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;                              &lt;dbl&gt; &lt;chr&gt;    
+##  1    10007 New York Lower Manhattan                    -913. Manhattan
+##  2    10069 New York &lt;NA&gt;                               -748. Manhattan
+##  3    10009 New York Lower East Side                    -714. Manhattan
+##  4    10016 New York Gramercy Park and Murray Hill      -712. Manhattan
+##  5    10001 New York Chelsea and Clinton                -710. Manhattan
+##  6    10002 New York Lower East Side                    -710. Manhattan
+##  7    10004 New York Lower Manhattan                    -706. Manhattan
+##  8    10038 New York Lower Manhattan                    -698. Manhattan
+##  9    10012 New York Greenwich Village and Soho         -686. Manhattan
+## 10    10010 New York Gramercy Park and Murray Hill      -685. Manhattan</code></pre>
+<p>As shown in the table, the ten neighborhoods with the largest rental
+drop between January 2021 and January 2020 were mainly concentrated in
+core areas such as Lower Manhattan, Chelsea, and Greenwich Village, all
+located in Manhattan. This indicates that the COVID-19 pandemic had a
+more pronounced impact on areas with high population density and
+economic activity.</p>
 </div>
 </div>
 

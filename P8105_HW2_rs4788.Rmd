@@ -1,13 +1,14 @@
 ---
 title: "P8105_HW2_rs4788"
 output: html_document
-date: "2025-09-30"
+author: Ruhui Shen rs4788
 ---
 
 ```{r setup}
 library(tidyverse)
 library(janitor)
 library(readxl)
+library(dplyr)
 ```
 
 # Problem 1
@@ -138,3 +139,72 @@ Professor Trash Wheel collected `r combined_trash_wheel %>% filter(trash_wheel =
 
 
 
+# Problem 3
+
+### Creat a single, well-organized dataset:
+
+```{r}
+zip_df =
+  read.csv("./zillow_data/Zip Codes.csv") %>%
+  janitor::clean_names()
+```
+
+
+```{r}
+zori_df =
+  read_csv("./zillow_data/Zip_zori_uc_sfrcondomfr_sm_month_NYC.csv") %>%
+  janitor::clean_names() 
+date_cols = names(zori_df)[10:ncol(zori_df)]
+zori_long = zori_df %>%
+  pivot_longer(
+    cols = all_of(date_cols),
+    names_to = "date",
+    values_to = "zori"
+  )
+```
+
+
+```{r}
+final_df = 
+  zori_long %>%
+  left_join(zip_df, by = c("region_name" = "zip_code"),relationship = "many-to-many")
+print(final_df)
+```
+
+### Describe dataset:
+The resulting tidy dataset contains `r nrow(final_df)` total observations.  
+There are `r dplyr::n_distinct(final_df$region_name)` unique ZIP codes represented, and `r dplyr::n_distinct(final_df$neighborhood)` unique neighborhoods.
+
+
+What about zipcode?
+
+```{r}
+missing_zips <- anti_join(
+  zip_df, 
+  zori_long, 
+  by = c("zip_code" = "region_name")
+)
+```
+In total, there are `r nrow(missing_zips)` ZIP codes present in the ZIP code dataset but absent from the Zillow rental price dataset. For example, ZIP codes such as `r paste(head(missing_zips$zip_code, 3), collapse = ", ")` are not included in the Zillow dataset.
+
+
+Rental price?
+
+```{r}
+covid_wide =
+  final_df %>%
+  filter(date %in% c("x2020_01_31", "x2021_01_31")) %>%
+  select(zip_code = region_name, neighborhood, county, date, zori) %>%
+  pivot_wider(
+    id_cols = c(zip_code, county, neighborhood),
+    names_from = date,
+    values_from = zori) %>%
+  mutate(price_diff = x2021_01_31 - x2020_01_31) %>%
+  arrange(price_diff)
+
+largest_drop =
+  covid_wide[order(covid_wide$price_diff), c("zip_code","county", "neighborhood", "price_diff")][1:10, ] %>%
+  mutate(borough = "Manhattan")
+print(largest_drop)
+```
+As shown in the table, the ten neighborhoods with the largest rental drop between January 2021 and January 2020 were mainly concentrated in core areas such as Lower Manhattan, Chelsea, and Greenwich Village, all located in Manhattan. This indicates that the COVID-19 pandemic had a more pronounced impact on areas with high population density and economic activity.
